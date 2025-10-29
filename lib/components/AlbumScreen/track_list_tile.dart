@@ -376,6 +376,7 @@ DismissDirection getAllowedDismissDirection({required bool swipeLeftEnabled, req
 
 class QueueListTile extends StatelessWidget {
   final BaseItemDto item;
+  final FinampQueueItem queueItem;
   final BaseItemDto? parentItem;
   final int? listIndex;
   final bool isCurrentTrack;
@@ -392,6 +393,7 @@ class QueueListTile extends StatelessWidget {
   const QueueListTile({
     super.key,
     required this.item,
+    required this.queueItem,
     required this.listIndex,
     required this.onTap,
     required this.isCurrentTrack,
@@ -407,6 +409,7 @@ class QueueListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     return TrackListItem(
       baseItem: item,
+      queueItem: queueItem,
       parentItem: parentItem,
       listIndex: listIndex,
       actualIndex: item.indexNumber,
@@ -478,6 +481,7 @@ class EditListTile extends StatelessWidget {
 class TrackListItem extends ConsumerWidget {
   final BaseItemDto baseItem;
   final BaseItemDto? parentItem;
+  final FinampQueueItem? queueItem;
   final int? listIndex;
   final int? actualIndex;
   final bool showArtists;
@@ -504,6 +508,7 @@ class TrackListItem extends ConsumerWidget {
     required this.confirmDismiss,
     required this.features,
     this.parentItem,
+    this.queueItem,
     this.isInPlaylist = false,
     this.allowDismiss = true,
     this.showArtists = true,
@@ -539,6 +544,7 @@ class TrackListItem extends ConsumerWidget {
       padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 6.0),
       child: TrackListItemTile(
         baseItem: baseItem,
+        queueItem: queueItem,
         listIndex: listIndex,
         actualIndex: actualIndex,
         showArtists: showArtists,
@@ -569,6 +575,7 @@ class TrackListItem extends ConsumerWidget {
               parentItem: parentItem,
               onRemoveFromList: onRemoveFromList,
               confirmPlaylistRemoval: false,
+              queueItem: queueItem,
             );
           }
         }
@@ -661,6 +668,7 @@ class TrackListItemTile extends ConsumerWidget {
     required this.onTap,
     required this.actualIndex,
     required this.features,
+    this.queueItem,
     this.listIndex,
     this.showArtists = true,
     this.forceAlbumArtists = false,
@@ -672,6 +680,7 @@ class TrackListItemTile extends ConsumerWidget {
   });
 
   final BaseItemDto baseItem;
+  final FinampQueueItem? queueItem;
   final bool isCurrentTrack;
   final int? listIndex;
   final int? actualIndex;
@@ -1024,7 +1033,7 @@ class TrackListItemTile extends ConsumerWidget {
                   ),
                 if (showOverflowMenu)
                   OverflowMenuButton(
-                    onPressed: () => showModalTrackMenu(context: context, item: baseItem),
+                    onPressed: () => showModalTrackMenu(context: context, item: baseItem, queueItem: queueItem),
                     color: Theme.of(context).textTheme.bodyMedium?.color ?? Colors.white,
                     label: AppLocalizations.of(context)!.menuButtonLabel,
                   ),
