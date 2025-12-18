@@ -8,15 +8,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };
-  outputs =
-    {
-      self,
-      nixpkgs,
-      flake-utils,
-      fenix,
-    }:
-    flake-utils.lib.eachDefaultSystem (
-      system:
+  outputs = { self, nixpkgs, flake-utils, fenix, }:
+    flake-utils.lib.eachDefaultSystem (system:
       let
         pkgs = import nixpkgs {
           inherit system;
@@ -31,24 +24,10 @@
         androidComposition = pkgs.androidenv.composeAndroidPackages {
           cmdLineToolsVersion = "8.0";
           toolsVersion = "26.1.1";
-          buildToolsVersions = [
-            buildToolsVersion
-            "35.0.0"
-            "34.0.0"
-            "33.0.2"
-            "30.0.3"
-          ];
-          platformVersions = [
-            "36"
-            "35"
-            "34"
-            "33"
-            "32"
-          ];
-          abiVersions = [
-            "armeabi-v7a"
-            "arm64-v8a"
-          ];
+          buildToolsVersions =
+            [ buildToolsVersion "35.0.0" "34.0.0" "33.0.2" "30.0.3" ];
+          platformVersions = [ "36" "35" "34" "33" "32" ];
+          abiVersions = [ "armeabi-v7a" "arm64-v8a" ];
           includeNDK = true;
           ndkVersions = [ "27.0.12077973" ];
           cmakeVersions = [ "3.22.1" ];
@@ -61,11 +40,16 @@
           # https://doc.rust-lang.org/stable/rustc/platform-support.html#tier-1-with-host-tools
           arch = builtins.elemAt (builtins.split "-" system) 0;
           os = builtins.elemAt (builtins.split "-" system) 2;
-          vendor = if os == "linux" then "unknown" else "apple"; # defaultSystems is linux and darwin only
+          vendor = if os == "linux" then
+            "unknown"
+          else
+            "apple"; # defaultSystems is linux and darwin only
           abi = lib.optionalString (os == "linux") "-gnu";
 
-          targetName = "${arch}-${vendor}-${os}${abi}"; # string like x86_64-unknown-linux-gnu
-          toolchainName = "${flavorName}-${targetName}"; # string like stable-x86_64-unknown-linux-gnu
+          targetName =
+            "${arch}-${vendor}-${os}${abi}"; # string like x86_64-unknown-linux-gnu
+          toolchainName =
+            "${flavorName}-${targetName}"; # string like stable-x86_64-unknown-linux-gnu
         in pkgs.writeShellApplication {
           name = "rustup";
 
@@ -95,36 +79,39 @@
         };
       in {
         devShells = let
-          mkFinampShell = { withFenix ? false }: with pkgs; mkShell rec {
-            ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
-            ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
-            GRADLE_OPTS = "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/${buildToolsVersion}/aapt2";
-            FLUTTER_ROOT = "${flutter}";
-            # finamp can't find libmpv on its own, even with `nix-shell -p mpv-unwrapped`
-            # still requires `cd build/linux/x64/release/bundle/lib/`
-            LD_LIBRARY_PATH = "${lib.makeLibraryPath [ pkgs.mpv-unwrapped ]}";
-            buildInputs = [
-              flutter
-              androidSdk
-              jdk17
-              androidComposition.platform-tools
-              cmake
-              dbus
-            ] ++ (if withFenix then [
-              rustupStub
-              (with pkgs.fenix; combine [
-                stable.cargo
-                stable.rustc
-                # rust-src in case of any issues
-              ])
-            ] else [
-              rustup
-            ]);
-          };
+          mkFinampShell = { withFenix ? false }:
+            with pkgs;
+            mkShell rec {
+              ANDROID_SDK_ROOT = "${androidSdk}/libexec/android-sdk";
+              ANDROID_HOME = "${androidSdk}/libexec/android-sdk";
+              GRADLE_OPTS =
+                "-Dorg.gradle.project.android.aapt2FromMavenOverride=${androidSdk}/libexec/android-sdk/build-tools/${buildToolsVersion}/aapt2";
+              FLUTTER_ROOT = "${flutter}";
+              # finamp can't find libmpv on its own, even with `nix-shell -p mpv-unwrapped`
+              # still requires `cd build/linux/x64/release/bundle/lib/`
+              LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.mpv-unwrapped ];
+              buildInputs = [
+                flutter
+                androidSdk
+                jdk17
+                androidComposition.platform-tools
+                cmake
+                dbus
+                pkg-config
+              ] ++ (if withFenix then [
+                rustupStub
+                (with pkgs.fenix;
+                  combine [
+                    stable.cargo
+                    stable.rustc
+                    # rust-src in case of any issues
+                  ])
+              ] else
+                [ rustup ]);
+            };
         in {
-          default = mkFinampShell {}; # nix develop
+          default = mkFinampShell { }; # nix develop
           fenix = mkFinampShell { withFenix = true; }; # nix develop .#fenix
         };
-      }
-    );
+      });
 }
