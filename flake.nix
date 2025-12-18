@@ -90,6 +90,9 @@
               # finamp can't find libmpv on its own, even with `nix-shell -p mpv-unwrapped`
               # still requires `cd build/linux/x64/release/bundle/lib/`
               LD_LIBRARY_PATH = lib.makeLibraryPath [ pkgs.mpv-unwrapped ];
+              shellHook = ''
+                export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:$PWD/build/linux/x64/debug/bundle/lib:$PWD/build/linux/x64/release/bundle/lib"
+              '';
               buildInputs = [
                 flutter
                 androidSdk
